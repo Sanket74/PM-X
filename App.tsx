@@ -2,37 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { 
-  ArrowRight, 
-  CheckCircle2, 
-  Linkedin, 
-  Youtube, 
-  Mail, 
-  Phone,
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import {
+  CheckCircle2,
+  Mail,
   Loader2,
   Menu,
   X,
   Calendar,
   Briefcase,
-  User,
   Users,
   Quote,
   Download,
-  ExternalLink
+  ExternalLink,
+  PlayCircle,
+  FileText,
+  ClipboardList,
+  CalendarDays,
+  LogOut
 } from 'lucide-react';
+
+import emailjs from '@emailjs/browser';
 
 // Firebase Imports
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInAnonymously, 
-  onAuthStateChanged 
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged
 } from 'firebase/auth';
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  serverTimestamp 
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 
 /**
@@ -68,9 +71,14 @@ const getInitialConfig = () => {
   return firebaseConfig;
 };
 
-const app = initializeApp(getInitialConfig());
-const auth = getAuth(app);
-const db = getFirestore(app);
+const hasFirebaseKeys = (config: Record<string, string>) =>
+  Boolean(config.apiKey && config.authDomain && config.projectId);
+
+const initialConfig = getInitialConfig();
+const firebaseEnabled = hasFirebaseKeys(initialConfig);
+const app = firebaseEnabled ? initializeApp(initialConfig) : null;
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
 // @ts-ignore
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'stepsmart-prod';
 
@@ -82,54 +90,80 @@ const enrollmentSchema = z.object({
   intent: z.enum(["brochure", "enroll"]),
 });
 
-// --- High-Fidelity Logo Component ---
+const logoSrc = "/stepsmart-logo.png";
+const sanketPhotoSrc = "/mentor-sanket.jpg";
+const ankitPhotoSrc = "/mentor-ankit.jpg";
+const brochurePdfSrc = "/PM-X-Accelerator-Brochure.pdf";
+const demoLeadsKey = "pmx_demo_leads";
+const demoUsersKey = "pmx_demo_users";
+const demoSessionKey = "pmx_demo_auth_session";
+
+type DemoUser = {
+  fullName: string;
+  email: string;
+  password: string;
+};
+
+type DashboardTab = 'lectures' | 'resources' | 'assignments' | 'calendar';
+
 const Logo = ({ className = "h-10" }) => (
-  <div className={`flex items-center gap-3 ${className}`}>
-    <div className="h-full aspect-square">
-      <svg viewBox="0 0 100 100" className="h-full w-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path 
-          d="M50 10L18 28.5V71.5L50 90L82 71.5V45" 
-          stroke="#188ab2" 
-          strokeWidth="10" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-        <path 
-          d="M32 78L88 22" 
-          stroke="#188ab2" 
-          strokeWidth="10" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-        <path 
-          d="M88 22H65M88 22V45" 
-          stroke="#188ab2" 
-          strokeWidth="10" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-        <path 
-          d="M30 48L42 36" 
-          stroke="#188ab2" 
-          strokeWidth="10" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-        <path 
-          d="M45 68L62 51" 
-          stroke="#188ab2" 
-          strokeWidth="10" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-    <div className="flex flex-col leading-none">
-      <span className="font-bold text-2xl tracking-tight text-[#188ab2]">STEPSMART</span>
-      <span className="text-[7px] font-bold text-slate-500 tracking-[0.2em] uppercase mt-0.5">Your Steps To Success</span>
-    </div>
-  </div>
+  <img
+    src={logoSrc}
+    alt="StepSmart logo"
+    className={`${className} w-auto object-contain`}
+  />
 );
+
+const startBrochureDownload = () => {
+  const link = document.createElement('a');
+  link.href = brochurePdfSrc;
+  link.download = 'PM-X-Accelerator-Brochure.pdf';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const saveLeadToDemoDB = (lead: any) => {
+  try {
+    const existing = JSON.parse(localStorage.getItem(demoLeadsKey) || "[]");
+    const next = [
+      ...existing,
+      {
+        ...lead,
+        source: "website-form",
+        submittedAt: new Date().toISOString()
+      }
+    ];
+    localStorage.setItem(demoLeadsKey, JSON.stringify(next));
+    (globalThis as any).__PMX_DEMO_LEADS__ = next;
+  } catch (e) {
+    console.error("Demo DB write failed", e);
+  }
+};
+
+const getDemoUsers = (): DemoUser[] => {
+  try {
+    return JSON.parse(localStorage.getItem(demoUsersKey) || "[]");
+  } catch (e) {
+    return [];
+  }
+};
+
+const saveDemoUsers = (users: DemoUser[]) => {
+  localStorage.setItem(demoUsersKey, JSON.stringify(users));
+};
+
+const getDemoSession = () => localStorage.getItem(demoSessionKey);
+
+const setDemoSession = (email: string | null) => {
+  if (email) {
+    localStorage.setItem(demoSessionKey, email);
+    return;
+  }
+  localStorage.removeItem(demoSessionKey);
+};
 
 const Button = ({ children, className, variant = "primary", isLoading, ...props }: any) => {
   const baseStyles = "inline-flex items-center justify-center rounded-md px-6 py-2.5 font-semibold transition-all duration-200 focus:outline-none disabled:opacity-50 active:scale-95";
@@ -138,7 +172,7 @@ const Button = ({ children, className, variant = "primary", isLoading, ...props 
     secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
     outline: "border border-slate-200 text-slate-600 hover:border-[#188ab2] hover:text-[#188ab2] bg-white shadow-sm"
   };
-  
+
   return (
     <button className={`${baseStyles} ${variants[variant]} ${className}`} disabled={isLoading} {...props}>
       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -147,13 +181,32 @@ const Button = ({ children, className, variant = "primary", isLoading, ...props 
   );
 };
 
-export default function App() {
+function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [enrollmentStatus, setEnrollmentStatus] = useState('idle');
-  const [formIntent, setFormIntent] = useState('enroll'); 
+  const [formIntent, setFormIntent] = useState('enroll');
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const existingFavicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+    if (existingFavicon) {
+      existingFavicon.href = logoSrc;
+      return;
+    }
+
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/png';
+    favicon.href = logoSrc;
+    document.head.appendChild(favicon);
+  }, []);
+
+  useEffect(() => {
+    if (!auth) {
+      return;
+    }
+
     const initAuth = async () => {
       try {
         await signInAnonymously(auth);
@@ -164,17 +217,37 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(enrollmentSchema),
     defaultValues: { intent: 'enroll' }
   });
 
+  const completeLeadSubmission = (intent: string) => {
+    setEnrollmentStatus('success');
+    if (intent === 'brochure') {
+      setTimeout(() => {
+        startBrochureDownload();
+      }, 1000);
+      return;
+    }
+    // Removed navigation to /auth page per user request
+  };
+
   const onSubmit = async (data: any) => {
+    setEnrollmentStatus('loading');
+    saveLeadToDemoDB(data);
+
+    if (!db) {
+      completeLeadSubmission(data.intent);
+      return;
+    }
+
     if (!user) {
+      setEnrollmentStatus('idle');
       alert("System initializing. Please wait a moment and try again.");
       return;
     }
-    setEnrollmentStatus('loading');
+
     try {
       const enrollmentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'leads');
       await addDoc(enrollmentsRef, {
@@ -182,12 +255,33 @@ export default function App() {
         userId: user.uid,
         submittedAt: serverTimestamp(),
       });
-      setEnrollmentStatus('success');
-      if (data.intent === 'brochure') {
-        setTimeout(() => {
-          window.open('https://www.stepsmart.net/brochure.pdf', '_blank');
-        }, 1000);
+
+      if (data.intent === 'enroll') {
+        try {
+          // Sending email via EmailJS
+          // You need to configure these variables in your .env or replace them with actual keys
+          const serviceId = getEnvVar('VITE_EMAILJS_SERVICE_ID') || 'YOUR_SERVICE_ID';
+          const templateId = getEnvVar('VITE_EMAILJS_TEMPLATE_ID') || 'YOUR_TEMPLATE_ID';
+          const publicKey = getEnvVar('VITE_EMAILJS_PUBLIC_KEY') || 'YOUR_PUBLIC_KEY';
+
+          await emailjs.send(
+            serviceId,
+            templateId,
+            {
+              to_name: data.fullName,
+              to_email: data.email,
+              whatsapp_link: 'https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc'
+            },
+            publicKey
+          );
+          console.log("Welcome email sent via EmailJS");
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+          // We don't fail the enrollment if the email fails to send
+        }
       }
+
+      completeLeadSubmission(data.intent);
     } catch (err) {
       setEnrollmentStatus('error');
     }
@@ -205,14 +299,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-[#188ab2]/10">
       <nav className="fixed top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-slate-100">
-        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-          <Logo className="h-10" />
+        <div className="container mx-auto px-6 h-24 flex items-center justify-between">
+          <Logo className="h-20" />
           <div className="hidden md:flex items-center gap-10 text-sm font-semibold text-slate-600">
             <a href="#about" className="hover:text-[#188ab2] transition-colors">About Us</a>
-            <a href="#accelerator" className="hover:text-[#188ab2] transition-colors">Mentorship Accelerator</a>
+            <a href="#accelerator" className="hover:text-[#188ab2] transition-colors">PM-X Accelerator</a>
             <a href="#mentors" className="hover:text-[#188ab2] transition-colors">Mentors</a>
-            <Button variant="primary" onClick={() => document.getElementById('enroll').scrollIntoView({ behavior: 'smooth' })}>
-              Get Started
+            <Button variant="primary" onClick={() => document.getElementById('enroll')?.scrollIntoView({ behavior: 'smooth' })}>
+              Enroll Now
             </Button>
           </div>
           <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -223,15 +317,15 @@ export default function App() {
 
       {/* Mobile Nav */}
       {isMenuOpen && (
-        <div className="md:hidden fixed top-20 left-0 w-full bg-white border-b border-slate-100 z-40 p-6 flex flex-col gap-4 shadow-xl animate-fade-in">
+        <div className="md:hidden fixed top-24 left-0 w-full bg-white border-b border-slate-100 z-40 p-6 flex flex-col gap-4 shadow-xl animate-fade-in">
           <a href="#about" onClick={() => setIsMenuOpen(false)} className="font-bold">About Us</a>
-          <a href="#accelerator" onClick={() => setIsMenuOpen(false)} className="font-bold">Mentorship Accelerator</a>
+          <a href="#accelerator" onClick={() => setIsMenuOpen(false)} className="font-bold">PM-X Accelerator</a>
           <a href="#mentors" onClick={() => setIsMenuOpen(false)} className="font-bold">Mentors</a>
           <Button variant="primary" onClick={() => { setIsMenuOpen(false); handleActionClick('enroll'); }}>Enroll Now</Button>
         </div>
       )}
 
-      <section className="pt-44 pb-28 md:pt-56 md:pb-40 bg-white">
+      <section className="pt-48 pb-28 md:pt-56 md:pb-40 bg-white">
         <div className="container mx-auto px-6 text-center max-w-5xl">
           <h1 className="text-5xl md:text-8xl font-extrabold tracking-tight mb-8 leading-[1.05] text-slate-900">
             Helping Professionals make <br />
@@ -241,9 +335,9 @@ export default function App() {
             Transition into high-growth Product Management roles with expert guidance, practical roadmaps, and AI-powered learning.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <a 
-              href="https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc" 
-              target="_blank" 
+            <a
+              href="https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc"
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-md px-10 py-4 font-semibold transition-all duration-200 bg-[#188ab2] text-white hover:bg-[#157a9d] shadow-sm text-lg"
             >
@@ -286,16 +380,16 @@ export default function App() {
       <section id="accelerator" className="py-24 bg-white">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight text-slate-900">The PM-X Mentorship Accelerator</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight text-slate-900">The PM-X Accelerator</h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto font-medium">
               Designed specifically for <span className="text-[#188ab2] underline decoration-[#188ab2]/30 underline-offset-8">non-PMs</span> who want to transition to Product Management.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 text-center">
             {[
-              { title: "Personalized Coaching", desc: "Weekly 1:1 sessions to unblock your specific career challenges." },
+              { title: "Live Mentorship", desc: "Weekly live sessions to unblock your specific career challenges." },
               { title: "Real-World Projects", desc: "Build a portfolio of PM case studies using AI-driven tools." },
-              { title: "Interview Guarantee", desc: "Mock interviews and referrals to land your first high-growth role." }
+              { title: "Interview Practise", desc: "Mock interviews and referrals to land your first high-growth role." }
             ].map((card, i) => (
               <div key={i} className="bg-slate-50 p-10 rounded-2xl border border-slate-100 hover:border-[#188ab2]/40 transition-all group shadow-sm">
                 <h3 className="text-xl font-bold mb-4 group-hover:text-[#188ab2] transition-colors">{card.title}</h3>
@@ -311,20 +405,28 @@ export default function App() {
           <h2 className="text-3xl font-bold mb-16 text-slate-900">Meet the Mentors</h2>
           <div className="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
             <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm flex flex-col items-center">
-              <div className="w-24 h-24 bg-slate-100 rounded-full mb-6 flex items-center justify-center border-2 border-white shadow-md">
-                <User className="h-12 w-12 text-slate-400" />
+              <div className="w-24 h-24 rounded-full mb-6 border-2 border-white shadow-md overflow-hidden">
+                <img
+                  src={sanketPhotoSrc}
+                  alt="Sanket"
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
-              <h3 className="text-2xl font-bold mb-1 text-slate-900">Sahil</h3>
-              <p className="text-[#188ab2] text-sm font-bold uppercase tracking-widest mb-4">Lead Mentor</p>
+              <h3 className="text-2xl font-bold mb-1 text-slate-900">Sanket</h3>
+              <p className="text-[#188ab2] text-sm font-bold uppercase tracking-widest mb-4">Senior Product Manager - Mastercard</p>
               <p className="text-slate-500 leading-relaxed italic">"Helping professionals break barriers into product roles."</p>
             </div>
             <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm flex flex-col items-center">
-              <div className="w-24 h-24 bg-slate-100 rounded-full mb-6 flex items-center justify-center border-2 border-white shadow-md">
-                <User className="h-12 w-12 text-slate-400" />
+              <div className="w-24 h-24 rounded-full mb-6 border-2 border-white shadow-md overflow-hidden">
+                <img
+                  src={ankitPhotoSrc}
+                  alt="Ankit"
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
               <h3 className="text-2xl font-bold mb-1 text-slate-900">Ankit</h3>
-              <p className="text-[#188ab2] text-sm font-bold uppercase tracking-widest mb-4">Growth Strategist</p>
-              <p className="text-slate-500 leading-relaxed italic">"Mastering recruitment cycles for senior pivots."</p>
+              <p className="text-[#188ab2] text-sm font-bold uppercase tracking-widest mb-4">Product Manager 2 - Microsoft</p>
+              <p className="text-slate-500 leading-relaxed italic">"PM mentor and product expert, turning ambiguity into clarity and scaling enterprise grade AI products."</p>
             </div>
           </div>
         </div>
@@ -353,7 +455,7 @@ export default function App() {
         <div className="container mx-auto px-6 max-w-6xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-12">Ready to Start Your Journey?</h2>
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
-            <button 
+            <button
               onClick={() => handleActionClick('brochure')}
               className={`flex flex-col items-center p-10 bg-slate-800 border-2 rounded-3xl transition-all group ${formIntent === 'brochure' ? 'border-[#188ab2]' : 'border-slate-700 hover:border-[#188ab2]/50'}`}
             >
@@ -361,7 +463,7 @@ export default function App() {
               <h3 className="text-xl font-bold mb-2 text-balance">Download Accelerator Brochure</h3>
               <p className="text-slate-400 text-sm">Get the curriculum and roadmap details.</p>
             </button>
-            <button 
+            <button
               onClick={() => handleActionClick('enroll')}
               className={`flex flex-col items-center p-10 bg-slate-800 border-2 rounded-3xl transition-all group ${formIntent === 'enroll' ? 'border-[#188ab2]' : 'border-slate-700 hover:border-[#188ab2]/50'}`}
             >
@@ -377,9 +479,19 @@ export default function App() {
                 <div className="bg-green-100 text-green-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
-                <h3 className="text-3xl font-bold mb-4">{formIntent === 'brochure' ? "Brochure Ready!" : "Success!"}</h3>
-                <p className="text-slate-600 mb-8">{formIntent === 'brochure' ? "Download started." : "We'll contact you soon."}</p>
-                <Button variant="outline" className="w-full" onClick={() => setEnrollmentStatus('idle')}>Back</Button>
+                <h3 className="text-3xl font-bold mb-4">{formIntent === 'brochure' ? "Brochure Ready!" : "Enrollment Submitted!"}</h3>
+                <p className="text-slate-600 mb-8">
+                  {formIntent === 'brochure'
+                    ? "Download started."
+                    : "We've sent a welcome email to your inbox with a link to join our WhatsApp community!"}
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setEnrollmentStatus('idle')}
+                >
+                  Back
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-left">
@@ -409,15 +521,290 @@ export default function App() {
 
       <footer className="bg-white py-12 border-t border-slate-100 text-center">
         <div className="container mx-auto px-6">
-          <Logo className="h-10 mb-8 mx-auto justify-center" />
-          <div className="flex justify-center gap-8 mb-8 text-slate-400">
-            <a href="#" className="hover:text-[#188ab2] transition-colors"><Linkedin /></a>
-            <a href="#" className="hover:text-[#188ab2] transition-colors"><Youtube /></a>
+          <Logo className="h-56 mb-8 mx-auto" />
+          <div className="flex justify-center mb-8 text-slate-400">
             <a href="mailto:administrator@stepsmart.net" className="hover:text-[#188ab2] transition-colors"><Mail /></a>
           </div>
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">© 2026 StepSmart. All rights reserved.</p>
         </div>
       </footer>
     </div>
+  );
+}
+
+function AuthPage() {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<'login' | 'signup'>('signup');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (getDemoSession()) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
+  const handleSubmitAuth = (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password.trim()) {
+      setError('Email and password are required.');
+      return;
+    }
+
+    const users = getDemoUsers();
+
+    if (mode === 'signup') {
+      if (fullName.trim().length < 2) {
+        setError('Please enter your full name.');
+        return;
+      }
+
+      if (users.some((user) => user.email.toLowerCase() === normalizedEmail)) {
+        setError('Account already exists. Please login.');
+        return;
+      }
+
+      const nextUsers = [
+        ...users,
+        {
+          fullName: fullName.trim(),
+          email: normalizedEmail,
+          password: password.trim()
+        }
+      ];
+      saveDemoUsers(nextUsers);
+      setDemoSession(normalizedEmail);
+      navigate('/dashboard');
+      return;
+    }
+
+    const matchedUser = users.find(
+      (user) => user.email.toLowerCase() === normalizedEmail && user.password === password.trim()
+    );
+
+    if (!matchedUser) {
+      setError('Invalid email or password.');
+      return;
+    }
+
+    setDemoSession(matchedUser.email);
+    navigate('/dashboard');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+        <Logo className="h-16 mb-8 mx-auto" />
+        <h1 className="text-2xl font-bold text-slate-900 text-center mb-2">
+          {mode === 'signup' ? 'Create Your Account' : 'Welcome Back'}
+        </h1>
+        <p className="text-slate-500 text-sm text-center mb-8">
+          {mode === 'signup' ? 'Sign up to access the PM-X learner dashboard.' : 'Login to continue learning.'}
+        </p>
+
+        <form className="space-y-4" onSubmit={handleSubmitAuth}>
+          {mode === 'signup' && (
+            <input
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              placeholder="Full Name"
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-[#188ab2]"
+            />
+          )}
+          <input
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            type="email"
+            placeholder="Email Address"
+            className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-[#188ab2]"
+          />
+          <input
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            type="password"
+            placeholder="Password"
+            className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-[#188ab2]"
+          />
+
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          <Button type="submit" className="w-full py-3">
+            {mode === 'signup' ? 'Sign Up' : 'Login'}
+          </Button>
+        </form>
+
+        <div className="text-center mt-6 text-sm text-slate-500">
+          {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
+          <button
+            className="text-[#188ab2] font-semibold"
+            onClick={() => {
+              setError('');
+              setMode(mode === 'signup' ? 'login' : 'signup');
+            }}
+          >
+            {mode === 'signup' ? 'Login' : 'Sign Up'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardPage() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<DashboardTab>('lectures');
+  const sessionEmail = getDemoSession();
+  const currentUser = getDemoUsers().find((user) => user.email === sessionEmail);
+
+  useEffect(() => {
+    if (!sessionEmail) {
+      navigate('/auth', { replace: true });
+    }
+  }, [sessionEmail, navigate]);
+
+  if (!sessionEmail) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200">
+        <div className="container mx-auto px-6 py-5 flex items-center justify-between">
+          <Logo className="h-14" />
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-500 hidden md:inline">
+              {currentUser?.fullName ? `Hi, ${currentUser.fullName}` : sessionEmail}
+            </span>
+            <Button
+              variant="outline"
+              className="!px-4 !py-2"
+              onClick={() => {
+                setDemoSession(null);
+                navigate('/auth');
+              }}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-6 py-10">
+        <h1 className="text-3xl font-bold text-slate-900 mb-8">PM-X Learning Dashboard</h1>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          <button
+            className={`rounded-xl border px-4 py-3 text-left transition ${activeTab === 'lectures' ? 'border-[#188ab2] bg-[#188ab2]/5 text-[#188ab2]' : 'border-slate-200 bg-white text-slate-600'}`}
+            onClick={() => setActiveTab('lectures')}
+          >
+            <PlayCircle className="h-5 w-5 mb-2" />
+            <p className="font-semibold">Video Lectures</p>
+          </button>
+          <button
+            className={`rounded-xl border px-4 py-3 text-left transition ${activeTab === 'resources' ? 'border-[#188ab2] bg-[#188ab2]/5 text-[#188ab2]' : 'border-slate-200 bg-white text-slate-600'}`}
+            onClick={() => setActiveTab('resources')}
+          >
+            <FileText className="h-5 w-5 mb-2" />
+            <p className="font-semibold">Resources</p>
+          </button>
+          <button
+            className={`rounded-xl border px-4 py-3 text-left transition ${activeTab === 'assignments' ? 'border-[#188ab2] bg-[#188ab2]/5 text-[#188ab2]' : 'border-slate-200 bg-white text-slate-600'}`}
+            onClick={() => setActiveTab('assignments')}
+          >
+            <ClipboardList className="h-5 w-5 mb-2" />
+            <p className="font-semibold">Assignments</p>
+          </button>
+          <button
+            className={`rounded-xl border px-4 py-3 text-left transition ${activeTab === 'calendar' ? 'border-[#188ab2] bg-[#188ab2]/5 text-[#188ab2]' : 'border-slate-200 bg-white text-slate-600'}`}
+            onClick={() => setActiveTab('calendar')}
+          >
+            <CalendarDays className="h-5 w-5 mb-2" />
+            <p className="font-semibold">Calendar</p>
+          </button>
+        </div>
+
+        {activeTab === 'lectures' && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {['PM Fundamentals', 'Case Study Walkthrough', 'Product Strategy in Practice'].map((item) => (
+              <div key={item} className="bg-white rounded-xl border border-slate-200 p-5">
+                <p className="font-semibold text-slate-900 mb-2">{item}</p>
+                <p className="text-sm text-slate-500">Recorded session available</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'resources' && (
+          <div className="grid md:grid-cols-2 gap-4">
+            {['PRD Template', 'Go-to-Market Checklist', 'PM Interview Framework'].map((item) => (
+              <div key={item} className="bg-white rounded-xl border border-slate-200 p-5">
+                <p className="font-semibold text-slate-900 mb-2">{item}</p>
+                <p className="text-sm text-slate-500">Downloadable study material</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'assignments' && (
+          <div className="space-y-3">
+            {['Week 1: Problem Discovery Exercise', 'Week 2: User Story Writing', 'Week 3: Metrics Definition'].map((item) => (
+              <div key={item} className="bg-white rounded-xl border border-slate-200 p-5 flex items-center justify-between">
+                <p className="font-semibold text-slate-900">{item}</p>
+                <span className="text-xs font-bold uppercase tracking-wide text-amber-600 bg-amber-50 px-3 py-1 rounded-full">Pending</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'calendar' && (
+          <div className="space-y-3">
+            {[
+              { title: 'Live Mentorship Session', date: 'Saturday, 6:00 PM' },
+              { title: 'Mock Interview Practice', date: 'Tuesday, 8:00 PM' },
+              { title: 'Doubt Clearing AMA', date: 'Thursday, 7:30 PM' }
+            ].map((item) => (
+              <div key={item.title} className="bg-white rounded-xl border border-slate-200 p-5">
+                <p className="font-semibold text-slate-900">{item.title}</p>
+                <p className="text-sm text-slate-500 mt-1">{item.date}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  if (!getDemoSession()) {
+    return <Navigate to="/auth" replace />;
+  }
+  return <>{children}</>;
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        {/* Preserved routes for later use */}
+        {/* <Route path="/auth" element={<AuthPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        /> */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
