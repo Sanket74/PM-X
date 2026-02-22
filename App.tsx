@@ -22,8 +22,6 @@ import {
   LogOut
 } from 'lucide-react';
 
-import emailjs from '@emailjs/browser';
-
 // Firebase Imports
 import { initializeApp } from 'firebase/app';
 import {
@@ -256,31 +254,6 @@ function LandingPage() {
         submittedAt: serverTimestamp(),
       });
 
-      if (data.intent === 'enroll') {
-        try {
-          // Sending email via EmailJS
-          // You need to configure these variables in your .env or replace them with actual keys
-          const serviceId = getEnvVar('VITE_EMAILJS_SERVICE_ID') || 'YOUR_SERVICE_ID';
-          const templateId = getEnvVar('VITE_EMAILJS_TEMPLATE_ID') || 'YOUR_TEMPLATE_ID';
-          const publicKey = getEnvVar('VITE_EMAILJS_PUBLIC_KEY') || 'YOUR_PUBLIC_KEY';
-
-          await emailjs.send(
-            serviceId,
-            templateId,
-            {
-              to_name: data.fullName,
-              to_email: data.email,
-              whatsapp_link: 'https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc'
-            },
-            publicKey
-          );
-          console.log("Welcome email sent via EmailJS");
-        } catch (emailError) {
-          console.error("Failed to send welcome email:", emailError);
-          // We don't fail the enrollment if the email fails to send
-        }
-      }
-
       completeLeadSubmission(data.intent);
     } catch (err) {
       setEnrollmentStatus('error');
@@ -483,7 +456,7 @@ function LandingPage() {
                 <p className="text-slate-600 mb-8">
                   {formIntent === 'brochure'
                     ? "Download started."
-                    : "We've sent a welcome email to your inbox with a link to join our WhatsApp community!"}
+                    : "Enrollment saved. You will receive a welcome email shortly."}
                 </p>
                 <Button
                   variant="outline"
