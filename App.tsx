@@ -187,33 +187,23 @@ function LandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const existingFavicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
-    if (existingFavicon) {
-      existingFavicon.href = logoSrc;
-      return;
-    }
-
-    const favicon = document.createElement('link');
-    favicon.rel = 'icon';
-    favicon.type = 'image/png';
-    favicon.href = logoSrc;
-    document.head.appendChild(favicon);
-  }, []);
-
-  useEffect(() => {
-    if (!auth) {
-      return;
-    }
-
-    const initAuth = async () => {
+    // Tracking analytics of page visits
+    const trackVisit = async () => {
       try {
-        await signInAnonymously(auth);
-      } catch (e) { console.error("Firebase Auth Error", e); }
+        if (db) {
+          const analyticsRef = collection(db, 'artifacts', appId, 'public', 'data', 'analytics');
+          await addDoc(analyticsRef, {
+            page: 'landing_page',
+            timestamp: serverTimestamp(),
+            userAgent: navigator.userAgent
+          });
+        }
+      } catch (e) {
+        console.error("Analytics failed", e);
+      }
     };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+    trackVisit();
+  }, [db]);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(enrollmentSchema),
@@ -228,7 +218,6 @@ function LandingPage() {
       }, 1000);
       return;
     }
-    // Removed navigation to /auth page per user request
   };
 
   const onSubmit = async (data: any) => {
@@ -240,17 +229,11 @@ function LandingPage() {
       return;
     }
 
-    if (!user) {
-      setEnrollmentStatus('idle');
-      alert("System initializing. Please wait a moment and try again.");
-      return;
-    }
-
     try {
       const enrollmentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'leads');
       await addDoc(enrollmentsRef, {
         ...data,
-        userId: user.uid,
+        userId: user?.uid || 'anonymous',
         submittedAt: serverTimestamp(),
       });
 
@@ -274,10 +257,10 @@ function LandingPage() {
       <nav className="fixed top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-slate-100">
         <div className="container mx-auto px-6 h-24 flex items-center justify-between">
           <Logo className="h-20" />
-          <div className="hidden md:flex items-center gap-10 text-sm font-semibold text-slate-600">
+          <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
             <a href="#about" className="hover:text-[#188ab2] transition-colors">About Us</a>
-            <a href="#accelerator" className="hover:text-[#188ab2] transition-colors">PM-X Accelerator</a>
-            <a href="#mentors" className="hover:text-[#188ab2] transition-colors">Mentors</a>
+            <a href="https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc" target="_blank" rel="noreferrer" className="hover:text-[#188ab2] transition-colors">Join Community</a>
+            <a href="https://calendly.com/sanket-stepsmart" target="_blank" rel="noreferrer" className="hover:text-[#188ab2] transition-colors">Book 1:1</a>
             <Button variant="primary" onClick={() => document.getElementById('enroll')?.scrollIntoView({ behavior: 'smooth' })}>
               Enroll Now
             </Button>
@@ -292,30 +275,31 @@ function LandingPage() {
       {isMenuOpen && (
         <div className="md:hidden fixed top-24 left-0 w-full bg-white border-b border-slate-100 z-40 p-6 flex flex-col gap-4 shadow-xl animate-fade-in">
           <a href="#about" onClick={() => setIsMenuOpen(false)} className="font-bold">About Us</a>
-          <a href="#accelerator" onClick={() => setIsMenuOpen(false)} className="font-bold">PM-X Accelerator</a>
-          <a href="#mentors" onClick={() => setIsMenuOpen(false)} className="font-bold">Mentors</a>
+          <a href="https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc" target="_blank" rel="noreferrer" className="font-bold">Join Community</a>
+          <a href="https://calendly.com/sanket-stepsmart" target="_blank" rel="noreferrer" className="font-bold">Book 1:1</a>
           <Button variant="primary" onClick={() => { setIsMenuOpen(false); handleActionClick('enroll'); }}>Enroll Now</Button>
         </div>
       )}
 
-      <section className="pt-48 pb-28 md:pt-56 md:pb-40 bg-white">
-        <div className="container mx-auto px-6 text-center max-w-5xl">
-          <h1 className="text-5xl md:text-8xl font-extrabold tracking-tight mb-8 leading-[1.05] text-slate-900">
-            Helping Professionals make <br />
-            <span className="text-[#188ab2]">smarter moves with AI</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Transition into high-growth Product Management roles with expert guidance, practical roadmaps, and AI-powered learning.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <a
-              href="https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-md px-10 py-4 font-semibold transition-all duration-200 bg-[#188ab2] text-white hover:bg-[#157a9d] shadow-sm text-lg"
-            >
-              Join Our Community <ExternalLink className="ml-2 h-5 w-5" />
-            </a>
+      {/* Hero Section - Static Poster */}
+      <section className="pt-24 bg-white overflow-hidden">
+        <div className="container mx-auto px-0 md:px-6">
+          <div className="relative w-full max-w-6xl mx-auto rounded-none md:rounded-3xl overflow-hidden shadow-2xl mt-12 group">
+            <img 
+              src="/hero_image.png" 
+              alt="PM-X Accelerator Hero Poster" 
+              className="w-full h-auto object-cover"
+            />
+            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-all duration-300 flex items-end justify-center pb-8 md:pb-16">
+               <a
+                href="https://chat.whatsapp.com/BCeLjXhQHrxFxOlxkb7DPc"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-full px-12 py-5 font-bold transition-all duration-200 bg-[#188ab2] text-white hover:bg-[#157a9d] shadow-2xl text-xl animate-bounce hover:animate-none"
+              >
+                Join Our Community <ExternalLink className="ml-2 h-6 w-6" />
+              </a>
+            </div>
           </div>
         </div>
       </section>
