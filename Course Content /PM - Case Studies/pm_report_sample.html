@@ -1,0 +1,140 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Sample PM Infographic Report — Sanket Kumar</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body { font-family: Inter, Roboto, Arial, sans-serif; background:#f3f4f6; color:#111827; margin:0; padding:24px;}
+    .card{ background:white; border-radius:12px; box-shadow:0 6px 24px rgba(15,23,42,0.08); padding:28px; max-width:900px; margin:24px auto;}
+    .cover { background: linear-gradient(135deg,#0ea5a4,#6366f1); color:white; padding:32px; border-radius:10px;}
+    .row{ display:flex; gap:18px; align-items:flex-start; }
+    .col{ flex:1; }
+    h1{ margin:0; font-size:28px; }
+    h2{ margin:0; font-size:18px; color:#111827; }
+    .muted{ color:#6b7280; font-size:13px; }
+    .score-bubble{ background:rgba(255,255,255,0.12); padding:10px 14px; border-radius:999px; display:inline-block; font-weight:700;}
+    .grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+    .small { font-size:13px; color:#374151;}
+    .stat { font-size:22px; font-weight:700; color:#111827; }
+    .chip{ display:inline-block; padding:8px 10px; border-radius:10px; background:#f1f5f9; font-size:13px; }
+    .radar-wrap{ width:320px; height:320px; display:flex; align-items:center; justify-content:center; }
+    .role-bar{ margin:8px 0; }
+    .role-bar .label{ font-size:13px; color:#374151; margin-bottom:6px;}
+    .role-bar .bar{ height:12px; background:#e6e9ef; border-radius:8px; overflow:hidden;}
+    .role-bar .bar > i{ display:block; height:100%; background:linear-gradient(90deg,#6366f1,#06b6d4); border-radius:8px;}
+    .plan { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+    .week { background:#f8fafc; border-radius:8px; padding:10px; min-width:140px; box-shadow:0 1px 0 rgba(2,6,23,0.04);}
+    .resume { background:#fff7ed; padding:12px; border-radius:8px; }
+    footer{ text-align:center; color:#6b7280; margin-top:18px; font-size:13px;}
+    .badge-high{ background:#ecfdf5; color:#065f46; padding:6px 8px; border-radius:8px; font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="cover row" style="align-items:center;">
+      <div style="flex:1">
+        <h1>PM Role Report</h1>
+        <div class="muted">Personalized recommendation for product management careers</div>
+        <div style="margin-top:12px;">
+          <span class="score-bubble">Overall: <span style="font-weight:800;">563</span></span>
+          <span style="margin-left:12px;" class="chip">Percentile: National 98</span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px; color:#f3f4f6"> </div>
+        <div style="margin-top:12px;" class="badge-high">Recommended role</div>
+        <div style="font-size:20px; font-weight:800; margin-top:8px;">Data/AI PM</div>
+        <div class="muted" style="margin-top:6px;">Target level: <strong>Associate</strong></div>
+      </div>
+    </div>
+
+    <div style="padding:18px 6px;">
+      <div class="row">
+        <div class="col">
+          <h2 style="margin-bottom:8px;">Snapshot</h2>
+          <div class="small">Why this fits</div>
+          <ul class="small" style="margin-top:6px;">
+            <li>High analytics comfort and ML curiosity (q4–q6)</li>
+            <li>Experimentation mindset and A/B testing experience (q11–q12)</li>
+            <li>Current role: Data Engineer (4 yrs) — strong credibility for Data PM</li>
+          </ul>
+
+          <div style="margin-top:12px;">
+            <div class="small">Top role alignment</div>
+            <div style="margin-top:8px;">
+              <div class="role-bar"><div class="label">Data/AI PM <span style="float:right;font-weight:700">45</span></div><div class="bar"><i style="width:72%"></i></div></div>
+              <div class="role-bar"><div class="label">Growth PM <span style="float:right;font-weight:700">42</span></div><div class="bar"><i style="width:66%"></i></div></div>
+              <div class="role-bar"><div class="label">Technical PM <span style="float:right;font-weight:700">38</span></div><div class="bar"><i style="width:60%"></i></div></div>
+              <div class="role-bar"><div class="label">Platform PM <span style="float:right;font-weight:700">36</span></div><div class="bar"><i style="width:56%"></i></div></div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <h2 style="margin-bottom:8px;">8-week Action Plan</h2>
+            <div class="plan">
+              <div class="week"><strong>Week 1</strong><div class="muted">Convert ETL work into two case studies</div></div>
+              <div class="week"><strong>Week 2</strong><div class="muted">Learn ML fundamentals (fast.ai intro)</div></div>
+              <div class="week"><strong>Week 3</strong><div class="muted">Build dashboard showing business metrics</div></div>
+              <div class="week"><strong>Week 4</strong><div class="muted">Design a mini ML experiment & measurement plan</div></div>
+              <div class="week"><strong>Week 5</strong><div class="muted">Write PRD for mini experiment</div></div>
+              <div class="week"><strong>Week 6</strong><div class="muted">Execute or simulate experiment</div></div>
+              <div class="week"><strong>Week 7</strong><div class="muted">Prepare resume bullets & STAR stories</div></div>
+              <div class="week"><strong>Week 8</strong><div class="muted">Apply to 8–12 Associate roles</div></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="width:360px;">
+          <div style="display:flex; gap:12px; align-items:center;">
+            <div style="width:120px; height:120px; border-radius:12px; background:linear-gradient(180deg,#eef2ff,#f0f9ff); display:flex; align-items:center; justify-content:center; flex-direction:column;">
+              <div style="font-weight:800; font-size:24px;">73</div>
+              <div class="muted">Analytical</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:13px; color:#374151;">Skill breakdown</div>
+              <div style="margin-top:8px;">
+                <div style="font-size:13px; color:#374151; margin-bottom:6px;">Analytical <strong style="float:right">73</strong></div>
+                <div style="height:8px; background:#eef2ff; border-radius:6px;"><div style="width:73%; height:100%; background:linear-gradient(90deg,#06b6d4,#6366f1); border-radius:6px"></div></div>
+
+                <div style="font-size:13px; color:#374151; margin-top:8px; margin-bottom:6px;">Quantitative <strong style="float:right">73</strong></div>
+                <div style="height:8px; background:#eef2ff; border-radius:6px;"><div style="width:73%; height:100%; background:linear-gradient(90deg,#06b6d4,#6366f1); border-radius:6px"></div></div>
+
+                <div style="font-size:13px; color:#374151; margin-top:8px; margin-bottom:6px;">Coding <strong style="float:right">10</strong></div>
+                <div style="height:8px; background:#eef2ff; border-radius:6px;"><div style="width:10%; height:100%; background:linear-gradient(90deg,#06b6d4,#6366f1); border-radius:6px"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;" class="resume">
+            <div style="font-size:13px; font-weight:700; margin-bottom:8px;">Resume Bullets</div>
+            <div style="font-size:13px;">
+              • Built real-time payments ETL processing 1M events/day; improved freshness by 40%.<br><br>
+              • Designed A/B tests for fraud scoring; reduced false positives by 12%.<br><br>
+              • Created monitoring dashboards reducing incidents by 60%.
+            </div>
+          </div>
+
+          <div style="margin-top:12px; padding:12px; border-radius:8px; background:#f8fafc;">
+            <div class="small">LinkedIn headline</div>
+            <div style="font-weight:700; margin-top:6px;">Data Engineer → Aspiring Data/AI Product Manager | 4 yrs in payments</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="margin-top:18px; border-top:1px solid #eef2ff; padding-top:14px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="muted">Generated by PM Role Finder • Model-assisted personalized report</div>
+        <div><button style="background:#6366f1; color:white; padding:10px 14px; border-radius:8px; border:none; font-weight:700;">Download PDF</button></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    Example sample report • This is mock data for demonstration
+  </footer>
+</body>
+</html>

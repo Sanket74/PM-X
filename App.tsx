@@ -384,7 +384,11 @@ function LandingPage() {
                   className="w-full h-full object-cover object-top"
                 />
               </div>
-              <h3 className="text-3xl font-bold mb-2 text-slate-900">Sanket</h3>
+              <h3 className="text-3xl font-bold mb-2 text-slate-900">
+                <a href="https://www.linkedin.com/in/sanketkumar-katore-b36506161/" target="_blank" rel="noreferrer" className="hover:text-[#188ab2] transition-colors inline-flex items-center gap-2">
+                  Sanket <ExternalLink className="h-6 w-6 text-[#188ab2]/50" />
+                </a>
+              </h3>
               <p className="text-[#188ab2] text-sm font-bold uppercase tracking-widest mb-6">Senior Product Manager - Mastercard</p>
               <div className="text-slate-500 leading-relaxed space-y-4 text-left border-t pt-6 w-full">
                 <p>• Successfully mentored 100+ professionals into high-growth PM roles.</p>
@@ -400,7 +404,11 @@ function LandingPage() {
                   className="w-full h-full object-cover object-top"
                 />
               </div>
-              <h3 className="text-3xl font-bold mb-2 text-slate-900">Ankit</h3>
+              <h3 className="text-3xl font-bold mb-2 text-slate-900">
+                <a href="https://www.linkedin.com/in/ankit-surkar/" target="_blank" rel="noreferrer" className="hover:text-[#188ab2] transition-colors inline-flex items-center gap-2">
+                  Ankit <ExternalLink className="h-6 w-6 text-[#188ab2]/50" />
+                </a>
+              </h3>
               <p className="text-[#188ab2] text-sm font-bold uppercase tracking-widest mb-6">Product Manager 2 - Microsoft</p>
               <div className="text-slate-500 leading-relaxed space-y-4 text-left border-t pt-6 w-full">
                 <p>• Leading enterprise-grade AI product development at Microsoft.</p>
