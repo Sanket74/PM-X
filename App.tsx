@@ -262,6 +262,7 @@ function LandingPage() {
             <a href="#who-is-it-for" className="hover:text-[#188ab2] transition-colors">Who is it for?</a>
             <a href="https://calendly.com/sanket-stepsmart" target="_blank" rel="noreferrer" className="hover:text-[#188ab2] transition-colors">Book 1:1</a>
             <a href="#mentors" className="hover:text-[#188ab2] transition-colors">Mentors</a>
+            <Link to="/auth" className="hover:text-[#188ab2] transition-colors font-bold">Login</Link>
             <Link to="/mock-interviews" className="hover:text-[#188ab2] transition-colors font-bold text-[#188ab2] bg-[#188ab2]/10 px-3 py-1 rounded-full">Mock Interviews 🚀</Link>
             <Button variant="primary" onClick={() => document.getElementById('enroll')?.scrollIntoView({ behavior: 'smooth' })}>
               Apply Now
@@ -279,6 +280,7 @@ function LandingPage() {
           <a href="#who-is-it-for" onClick={() => setIsMenuOpen(false)} className="font-bold">Who is it for?</a>
           <a href="https://calendly.com/sanket-stepsmart" target="_blank" rel="noreferrer" className="font-bold">Book 1:1</a>
           <a href="#mentors" onClick={() => setIsMenuOpen(false)} className="font-bold">Mentors</a>
+          <Link to="/auth" onClick={() => setIsMenuOpen(false)} className="font-bold">Login</Link>
           <Link to="/mock-interviews" onClick={() => setIsMenuOpen(false)} className="font-bold text-[#188ab2]">Mock Interviews 🚀</Link>
           <Button variant="primary" onClick={() => { setIsMenuOpen(false); handleActionClick('enroll'); }}>Apply Now</Button>
         </div>
@@ -830,8 +832,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/mock-interviews" element={<MockLoopPage />} />
-        {/* Preserved routes for later use */}
-        {/* <Route path="/auth" element={<AuthPage />} />
+        {/* Restored routes */}
+        <Route path="/auth" element={<AuthPage />} />
         <Route
           path="/dashboard"
           element={
@@ -839,7 +841,7 @@ export default function App() {
               <DashboardPage />
             </ProtectedRoute>
           }
-        /> */}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
