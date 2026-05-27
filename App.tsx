@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, Link } from 'react-router-dom';
+import { MockLoopPage } from './src/pages/MockLoopPage';
 import {
   CheckCircle2,
   Mail,
@@ -76,9 +77,9 @@ const initialConfig = getInitialConfig();
 const firebaseEnabled = hasFirebaseKeys(initialConfig);
 const app = firebaseEnabled ? initializeApp(initialConfig) : null;
 const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
+export const db = app ? getFirestore(app) : null;
 // @ts-ignore
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'stepsmart-prod';
+export const appId = typeof __app_id !== 'undefined' ? __app_id : 'stepsmart-prod';
 
 // --- Form Validation Schema ---
 const enrollmentSchema = z.object({
@@ -261,6 +262,7 @@ function LandingPage() {
             <a href="#who-is-it-for" className="hover:text-[#188ab2] transition-colors">Who is it for?</a>
             <a href="https://calendly.com/sanket-stepsmart" target="_blank" rel="noreferrer" className="hover:text-[#188ab2] transition-colors">Book 1:1</a>
             <a href="#mentors" className="hover:text-[#188ab2] transition-colors">Mentors</a>
+            <Link to="/mock-interviews" className="hover:text-[#188ab2] transition-colors font-bold text-[#188ab2] bg-[#188ab2]/10 px-3 py-1 rounded-full">Mock Interviews 🚀</Link>
             <Button variant="primary" onClick={() => document.getElementById('enroll')?.scrollIntoView({ behavior: 'smooth' })}>
               Apply Now
             </Button>
@@ -277,6 +279,7 @@ function LandingPage() {
           <a href="#who-is-it-for" onClick={() => setIsMenuOpen(false)} className="font-bold">Who is it for?</a>
           <a href="https://calendly.com/sanket-stepsmart" target="_blank" rel="noreferrer" className="font-bold">Book 1:1</a>
           <a href="#mentors" onClick={() => setIsMenuOpen(false)} className="font-bold">Mentors</a>
+          <Link to="/mock-interviews" onClick={() => setIsMenuOpen(false)} className="font-bold text-[#188ab2]">Mock Interviews 🚀</Link>
           <Button variant="primary" onClick={() => { setIsMenuOpen(false); handleActionClick('enroll'); }}>Apply Now</Button>
         </div>
       )}
@@ -816,10 +819,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    if (auth) {
+      signInAnonymously(auth).catch((err) => console.error("Anonymous auth failed:", err));
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/mock-interviews" element={<MockLoopPage />} />
         {/* Preserved routes for later use */}
         {/* <Route path="/auth" element={<AuthPage />} />
         <Route
